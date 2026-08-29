@@ -12,6 +12,22 @@ Built at Monad Blitz New Delhi V4.
 
 ---
 
+## What it looks like
+
+**The board** — what goes on the projector. Supporters flip in as they join, rows fill by cohort, and a green `PAID` lands on each one the moment the payout clears.
+
+<p align="center">
+  <img src="docs/board.png" alt="DayOne board: 25 supporters paid across three cohorts" width="900">
+</p>
+
+**The ticket** — what a supporter sees on their phone, one tap after scanning the QR.
+
+<p align="center">
+  <img src="docs/ticket.png" alt="DayOne join ticket showing rank #1, Row 1" width="380">
+</p>
+
+---
+
 ## The problem
 
 Being early to something is worth a lot, and right now it is worth nothing.
