@@ -43,9 +43,9 @@ At 400 ms blocks and near-zero fees, hundreds of direct transfers cost cents and
 
 | | |
 |---|---|
-| **Contract** | `0x...` *(Monad Testnet, chain ID 10143)* |
+| **Contract** | [`0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C`](https://testnet.monadvision.com/address/0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C) *(Monad Testnet, chain ID 10143)* |
 | **App** | `https://...` |
-| **Explorer** | `https://testnet.monadvision.com/address/0x...` |
+| **Explorer** | `https://testnet.monadvision.com/address/0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C` |
 
 ## How the contract works
 
