@@ -43,9 +43,9 @@ At 400 ms blocks and near-zero fees, hundreds of direct transfers cost cents and
 
 | | |
 |---|---|
-| **Contract** | [`0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C`](https://testnet.monadvision.com/address/0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C) *(Monad Testnet, chain ID 10143)* |
+| **Contract** | [`0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD`](https://testnet.monadvision.com/address/0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD) *(Monad Testnet, chain ID 10143)* |
 | **App** | [dayone-peach.vercel.app](https://dayone-peach.vercel.app) |
-| **Explorer** | `https://testnet.monadvision.com/address/0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C` |
+| **Explorer** | `https://testnet.monadvision.com/address/0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD` |
 
 ## How the contract works
 

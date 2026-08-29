@@ -16,7 +16,7 @@ export const monadTestnet = defineChain({
 })
 
 export const CONTRACT =
-  import.meta.env.VITE_CONTRACT || '0xe1e7C7c3Cb70Ad06DAebC0Bf128d3ff96D329f8C'
+  import.meta.env.VITE_CONTRACT || '0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD'
 
 export const CHAIN_ID_HEX = '0x279f'
 

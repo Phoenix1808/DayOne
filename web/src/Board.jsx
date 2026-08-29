@@ -5,7 +5,6 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { dayOneAbi, friendlyError } from './abi'
 import { CONTRACT, connect, explorerTx, monadTestnet, publicClient, rowOf, short } from './chain'
 
-const DEPLOY_BLOCK = 57851520n
 const LOG_CHUNK = 100n
 const MAX_CHUNKS = 30
 
