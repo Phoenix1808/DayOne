@@ -5,7 +5,7 @@
 
 import { createPublicClient, createWalletClient, formatEther, http, parseEther, parseAbi } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 
 const [, , idArg, countArg] = process.argv
 if (!idArg) {
@@ -95,8 +95,14 @@ if (reg[4]) {
 const wallets = Array.from({ length: COUNT }, () => {
   const pk = generatePrivateKey()
   const account = privateKeyToAccount(pk)
-  return { account, client: createWalletClient({ account, chain, transport: http() }) }
+  return { pk, account, client: createWalletClient({ account, chain, transport: http() }) }
 })
+
+// keep the keys so the leftover gas can be swept back later
+writeFileSync(
+  new URL('../.seed-keys.json', import.meta.url),
+  JSON.stringify(wallets.map((w) => ({ pk: w.pk, address: w.account.address })), null, 2),
+)
 
 console.log(`
 funding ${COUNT} wallets sequentially…`)

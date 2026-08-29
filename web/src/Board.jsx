@@ -346,6 +346,18 @@ export default function Board() {
   const rows = { 1: [], 2: [], 3: [] }
   for (const j of joins) rows[rowOf(j.rank)].push(j)
 
+  const weightFor = (r) => (r === 1 ? 3n : r === 2 ? 2n : 1n)
+  const totalWeight =
+    BigInt(rows[1].length) * 3n + BigInt(rows[2].length) * 2n + BigInt(rows[3].length)
+  const unit =
+    registry && totalWeight > 0n
+      ? registry.unit > 0n
+        ? registry.unit
+        : registry.pot / totalWeight
+      : 0n
+  const perHead = (r) => Number(formatEther(unit * weightFor(r))).toFixed(4)
+  const paidCount = joins.filter((j) => j.paid).length
+
   return (
     <div className="board">
       <header className="board-head">
@@ -358,6 +370,12 @@ export default function Board() {
             <span className="n">{joins.length}</span>
             <span className="l">here</span>
           </div>
+          {paidCount > 0 && (
+            <div className="stat paid-stat">
+              <span className="n">{paidCount}</span>
+              <span className="l">paid</span>
+            </div>
+          )}
           <div className="stat">
             <span className="n">{registry ? Number(formatEther(registry.pot)).toFixed(2) : '0'}</span>
             <span className="l">MON in pot</span>
@@ -375,6 +393,12 @@ export default function Board() {
           <div className="code-line">
             <span className="eyebrow">Code</span>
             <strong>{code || '—'}</strong>
+          </div>
+
+          <div className={`gate-line${registry?.gateEnabled ? ' on' : ''}`}>
+            {registry?.gateEnabled
+              ? '● Code gate ON — only this room can join'
+              : '○ Code gate OFF — anyone can join from anywhere'}
           </div>
 
           <button
@@ -428,6 +452,9 @@ export default function Board() {
               Paid {progress.done}/{progress.total} across {progress.batches} batch
               {progress.batches > 1 ? 'es' : ''}
               {progress.ms ? ` in ${(progress.ms / 1000).toFixed(1)}s` : '…'}
+              {registry && registry.paidOut > 0n
+                ? ` · ${Number(formatEther(registry.paidOut)).toFixed(3)} MON distributed`
+                : ''}
             </div>
           )}
           {error && <div className="msg err">{error}</div>}
@@ -438,11 +465,14 @@ export default function Board() {
             <section key={r} className={`row-block row-${r}`}>
               <div className="row-head">
                 <span>Row {r}</span>
+                <span className="each">
+                  {unit > 0n ? `${perHead(r)} MON each` : ''}
+                </span>
                 <span className="mult">{r === 1 ? '3×' : r === 2 ? '2×' : '1×'}</span>
                 <span className="cnt">{rows[r].length}</span>
               </div>
               <ul className="flaps">
-                {rows[r].length === 0 && <li className="flap empty">—</li>}
+                {rows[r].length === 0 && <li className="flap empty">waiting…</li>}
                 {rows[r].map((j) => (
                   <li key={j.rank} className={`flap${j.paid ? ' paid' : ''}`}>
                     <span className="rk">{String(j.rank).padStart(3, '0')}</span>

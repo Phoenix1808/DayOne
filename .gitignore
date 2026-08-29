@@ -14,3 +14,7 @@ dist-ssr/
 # editor / os
 .DS_Store
 .vscode/
+
+# throwaway seed wallets - never commit
+.seed-keys.json
+web/.seed-keys.json
