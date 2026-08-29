@@ -207,12 +207,18 @@ export default function Board() {
   async function fund() {
     setError(''); setBusy('fund')
     try {
-      await withWallet(async (wallet) => {
+      await withWallet(async (wallet, address) => {
+        const value = parseEther(amount)
+        await publicClient.simulateContract({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'fund',
+          args: [rid], value, account: address,
+        })
         const hash = await wallet.writeContract({
           address: CONTRACT, abi: dayOneAbi, functionName: 'fund',
-          args: [rid], value: parseEther(amount), gas: 80_000n,
+          args: [rid], value, gas: 80_000n,
         })
-        await publicClient.waitForTransactionReceipt({ hash })
+        const receipt = await publicClient.waitForTransactionReceipt({ hash })
+        if (receipt.status !== 'success') throw new Error('fund transaction reverted')
       })
       await refresh()
     } catch (e) { setError(friendlyError(e)) }
@@ -247,11 +253,17 @@ export default function Board() {
       ])
       const remaining = Number(count) - Number(paid)
       if (remaining <= 0) throw new Error('NothingLeft')
+      if (!registry || registry.pot === 0n) throw new Error('NotFunded')
 
       const batches = Math.ceil(remaining / BATCH)
       setProgress({ done: 0, total: remaining, batches })
 
       await withWallet(async (wallet, address) => {
+        await publicClient.simulateContract({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'payout',
+          args: [rid, BigInt(BATCH)], account: address,
+        })
+
         // local nonce, otherwise the batches serialise
         const base = await publicClient.getTransactionCount({ address })
         const started = Date.now()
@@ -377,6 +389,9 @@ export default function Board() {
                 {busy === 'fund' ? '…' : 'Fund'}
               </button>
             </div>
+            <p className="hint">
+              Pot: {registry ? formatEther(registry.pot) : '0'} MON
+            </p>
 
             <button className="btn pay" onClick={payEveryone} disabled={!!busy}>
               {busy === 'pay' ? <><span className="spinner" />Paying…</> : 'Pay everyone'}
