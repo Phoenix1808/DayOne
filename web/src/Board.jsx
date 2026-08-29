@@ -6,7 +6,7 @@ import { dayOneAbi, friendlyError } from './abi'
 import { CONTRACT, connect, explorerTx, monadTestnet, publicClient, rowOf, short } from './chain'
 
 const LOG_CHUNK = 100n
-const MAX_CHUNKS = 30
+const MAX_CHUNKS = 8
 
 const BATCH = 20
 const ROTATE_MS = 30_000
@@ -63,6 +63,7 @@ export default function Board() {
   const [rotating, setRotating] = useState(false)
   const cursor = useRef(null)
   const handles = useRef(new Map())
+  const inFlight = useRef(false)
 
   const rid = id ? BigInt(id) : null
   const joinUrl = rid
@@ -73,7 +74,8 @@ export default function Board() {
     : ''
  //live state tis is
   const refresh = useCallback(async () => {
-    if (!rid) return
+    if (!rid || inFlight.current) return
+    inFlight.current = true
     try {
       const [reg, head, count, paidTo] = await Promise.all([
         publicClient.readContract({
@@ -126,13 +128,15 @@ export default function Board() {
     } catch (e) {
       //fallback to avoid blank board
       console.warn('refresh', e)
+    } finally {
+      inFlight.current = false
     }
   }, [rid])
 
   useEffect(() => {
     if (!rid) return
     refresh()
-    const t = setInterval(refresh, 2000)
+    const t = setInterval(refresh, 2500)
     return () => clearInterval(t)
   }, [rid, refresh])
 
