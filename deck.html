@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DayOne — Monad Blitz New Delhi V4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+  :root {
+    --paper:  #FBF8F2;
+    --ink:    #14110C;
+    --ink-2:  #5C5445;
+    --ink-3:  #8A8172;
+    --amber:  #A2700B;
+    --rule:   #D8D0BF;
+    --good:   #1F6B45;
+    --mono: 'Martian Mono', ui-monospace, Consolas, monospace;
+    --sans: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; background: #6E675A; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .slide {
+    width: 297mm;
+    height: 210mm;
+    padding: 13mm 15mm 11mm;
+    background: var(--paper);
+    margin: 8mm auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* masthead */
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 3mm;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 7pt;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .top .meta {
+    font-family: var(--mono);
+    font-size: 7pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 30pt;
+    letter-spacing: -0.035em;
+    margin: 5mm 0 1.5mm;
+    line-height: 1;
+  }
+  .standfirst {
+    font-size: 12pt;
+    color: var(--ink-2);
+    margin: 0 0 6mm;
+    max-width: 175mm;
+    line-height: 1.4;
+  }
+  .standfirst b { color: var(--ink); font-weight: 700; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 3mm;
+    padding-bottom: 1.5mm;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  p { margin: 0 0 2.5mm; line-height: 1.5; font-size: 9.5pt; }
+  p:last-child { margin-bottom: 0; }
+  .dim { color: var(--ink-2); }
+
+  .cols { display: grid; gap: 9mm; flex: 1; min-height: 0; }
+  .c-40-60 { grid-template-columns: 4fr 6fr; }
+  .c-3     { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* the flow */
+  .flow { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 9mm 1fr;
+    gap: 4mm;
+    padding: 3.5mm 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .step:last-child { border-bottom: 0; }
+  .step .n {
+    font-family: var(--mono);
+    font-size: 15pt;
+    font-weight: 700;
+    color: var(--amber);
+    line-height: 0.9;
+  }
+  .step .t {
+    font-family: var(--mono);
+    font-size: 9.5pt;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 1mm;
+  }
+  .step .d { font-size: 8.5pt; color: var(--ink-2); line-height: 1.45; }
+  .step .d code {
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    color: var(--ink);
+    background: #EFEADF;
+    padding: 0 1mm;
+  }
+
+  /* cohort table */
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  th, td { text-align: left; padding: 2mm 2mm 2mm 0; border-bottom: 1px solid var(--rule); }
+  th {
+    font-family: var(--mono);
+    font-size: 6.5pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.w { font-family: var(--mono); font-weight: 700; color: var(--amber); }
+  tr:last-child td { border-bottom: 0; }
+
+  /* the big claim */
+  .claim {
+    border-left: 3px solid var(--amber);
+    padding: 0 0 0 6mm;
+    margin: 0 0 6mm;
+  }
+  .claim p {
+    font-size: 14pt;
+    line-height: 1.35;
+    color: var(--ink);
+    margin: 0;
+    max-width: 200mm;
+  }
+  .claim b { color: var(--amber); }
+
+  /* measured numbers */
+  .figs { display: flex; flex-direction: column; gap: 3mm; }
+  .fig { border-bottom: 1px solid var(--rule); padding-bottom: 2.5mm; }
+  .fig:last-child { border-bottom: 0; }
+  .fig .v {
+    font-family: var(--mono);
+    font-size: 15pt;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    line-height: 1.05;
+  }
+  .fig .k {
+    font-family: var(--mono);
+    font-size: 6.5pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* found-the-hard-way list */
+  .finds { display: flex; flex-direction: column; gap: 3.5mm; }
+  .find .h {
+    font-family: var(--mono);
+    font-size: 8.5pt;
+    font-weight: 700;
+    margin-bottom: 1mm;
+  }
+  .find .b { font-size: 8.5pt; color: var(--ink-2); line-height: 1.45; }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    line-height: 1.6;
+    background: #F2EDE3;
+    border: 1px solid var(--rule);
+    padding: 3mm;
+    margin: 0 0 3mm;
+    overflow: hidden;
+    white-space: pre;
+  }
+
+  .foot {
+    margin-top: auto;
+    padding-top: 4mm;
+    border-top: 2px solid var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8mm;
+    font-family: var(--mono);
+    font-size: 7.5pt;
+    letter-spacing: 0.06em;
+  }
+  .foot .lbl { color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.16em; font-size: 6.5pt; display: block; margin-bottom: 0.8mm; }
+  .foot .val { color: var(--ink); word-break: break-all; }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 6.5pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid var(--good);
+    color: var(--good);
+    padding: 0.6mm 1.6mm;
+    vertical-align: 1.2mm;
+  }
+
+  .hint {
+    max-width: 297mm;
+    margin: 0 auto;
+    padding: 6mm 15mm 10mm;
+    color: #EDE7DA;
+    font-size: 10pt;
+    line-height: 1.6;
+  }
+  .hint b { color: #F5C86A; }
+  .hint code { font-family: var(--mono); font-size: 9pt; background: rgba(255,255,255,.12); padding: 0 1mm; }
+
+  @page { size: A4 landscape; margin: 0; }
+
+  @media print {
+    html, body { background: #fff; }
+    .slide { margin: 0; page-break-after: always; box-shadow: none; }
+    .slide:last-of-type { page-break-after: auto; }
+    .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================ SLIDE 1 ============================ -->
+<section class="slide">
+  <div class="top">
+    <span class="eyebrow">Monad Blitz · New Delhi V4</span>
+    <span class="meta">Monad Testnet · chain 10143</span>
+  </div>
+
+  <h1>DayOne</h1>
+  <p class="standfirst">
+    Proof of who backed you first — and payouts that <b>actually reach them</b>.
+    No claim page, no Merkle tree, no unclaimed seventy percent.
+  </p>
+
+  <div class="cols c-40-60">
+    <div>
+      <h2>The problem</h2>
+      <p>Being early to something is worth a lot, and right now it is worth nothing. You followed the creator at 400 followers. You were in the Discord before the token. All you have is a screenshot.</p>
+      <p>Crypto's answer is the airdrop — and airdrops make you come and <em>claim</em>. Most people never do. The money sits there.</p>
+      <p class="dim">That is not a UX failure. Paying 500 people directly on Ethereum costs more than the payout, so pull-based distribution was the only affordable design. <b>Every claim page is a workaround for expensive settlement.</b></p>
+
+      <h2 style="margin-top:7mm">Rewards are seat rows</h2>
+      <table>
+        <thead><tr><th>Cohort</th><th>Ranks</th><th>Weight</th><th>From a 2 MON pot</th></tr></thead>
+        <tbody>
+          <tr><td>Row 1</td><td class="num">1 – 5</td><td class="w">3×</td><td class="num">0.1333 MON</td></tr>
+          <tr><td>Row 2</td><td class="num">6 – 15</td><td class="w">2×</td><td class="num">0.0889 MON</td></tr>
+          <tr><td>Row 3</td><td class="num">16 +</td><td class="w">1×</td><td class="num">0.0444 MON</td></tr>
+        </tbody>
+      </table>
+      <p class="dim" style="margin-top:2.5mm;font-size:8.5pt">Cohorts, not a curve: inside one 400 ms block the ordering is the chain's, not the user's — a <code>1/rank</code> curve would turn network jitter into money.</p>
+    </div>
+
+    <div>
+      <h2>How it runs, end to end</h2>
+      <div class="flow">
+        <div class="step">
+          <span class="n">1</span>
+          <div>
+            <div class="t">A registry opens</div>
+            <div class="d">A creator, project or event calls <code>openRegistry</code>. A QR goes on the screen and rotates every 30 seconds — only its <b>hash</b> is stored on chain, because everything on chain is public.</div>
+          </div>
+        </div>
+        <div class="step">
+          <span class="n">2</span>
+          <div>
+            <div class="t">The room taps once</div>
+            <div class="d"><code>join(id, code, handle)</code> writes the address, the exact second, and the position in the queue. The rank is the array index — permanent, and verifiable by anyone.</div>
+          </div>
+        </div>
+        <div class="step">
+          <span class="n">3</span>
+          <div>
+            <div class="t">The owner funds and freezes</div>
+            <div class="d"><code>fund</code> moves money into the contract. <code>freeze</code> locks the ranks and fixes each cohort's share once — the same reason a snapshot block exists in an airdrop.</div>
+          </div>
+        </div>
+        <div class="step">
+          <span class="n">4</span>
+          <div>
+            <div class="t">Everyone is paid, directly</div>
+            <div class="d"><code>payout(id, batchSize)</code> walks a cursor, so batches fire concurrently and a failed batch resumes exactly where it stopped. Nobody is paid twice. <b>Recipients do nothing at all.</b></div>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:6mm">Safety built for a live stage</h2>
+      <p class="dim" style="font-size:8.5pt">
+        <b>Push by default, pull as a fallback</b> — a transfer that fails is recorded in <code>owed</code> instead of reverting, so one bad address never blocks the other 199.
+        <b>Auto-freeze</b> — <code>payout</code> freezes for you, because on stage there is one button, not three.
+        <b>Kill switch</b> — the code gate can be turned off mid-demo if rotation misbehaves.
+      </p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div><span class="lbl">Live app</span><span class="val">dayone-peach.vercel.app</span></div>
+    <div><span class="lbl">Contract</span><span class="val">0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD</span></div>
+    <div><span class="lbl">Code</span><span class="val">github.com/Phoenix1808/DayOne</span></div>
+  </div>
+</section>
+
+<!-- ============================ SLIDE 2 ============================ -->
+<section class="slide">
+  <div class="top">
+    <span class="eyebrow">DayOne · Why this belongs on Monad</span>
+    <span class="meta">Slide 2 of 2</span>
+  </div>
+
+  <h1 style="font-size:22pt;margin-top:6mm">The claim step only exists<br>because settlement was expensive.</h1>
+
+  <div class="claim" style="margin-top:5mm">
+    <p>On Ethereum, paying five hundred people individually costs more than the payout — that is the <b>only</b> reason airdrops are claim-based. At 400 ms blocks and near-zero fees, you <b>delete the claim step entirely</b>.</p>
+  </div>
+
+  <div class="cols c-3">
+    <div>
+      <h2>Measured on testnet</h2>
+      <div class="figs">
+        <div class="fig"><span class="v">25 → 2 tx</span><span class="k">supporters paid, concurrent batches</span></div>
+        <div class="fig"><span class="v">2.000 MON</span><span class="k">distributed · 2 wei of dust left</span></div>
+        <div class="fig"><span class="v">121,285</span><span class="k">gas for one join</span></div>
+        <div class="fig"><span class="v">3 real wallets</span><span class="k">live end-to-end, outside the team <span class="tag">verified</span></span></div>
+      </div>
+      <pre>totalWeight = 5×3 + 10×2 + 10×1 = 45
+unit        = 2 MON / 45
+            = 0.044444444444444444</pre>
+    </div>
+
+    <div>
+      <h2>Three things Monad does differently</h2>
+      <div class="finds">
+        <div class="find">
+          <div class="h">eth_getLogs caps at 100 blocks</div>
+          <div class="b">Rebuilding the list from events silently showed nothing. The list now comes from the <code>entries</code> array; logs only attach display names.</div>
+        </div>
+        <div class="find">
+          <div class="h">The RPC allows 15 requests/second</div>
+          <div class="b">Twenty-five reads as separate <code>eth_call</code>s tripped the limit and the board rendered a name with no supporters. Everything goes through Multicall3 now.</div>
+        </div>
+        <div class="find">
+          <div class="h">Every account reserves 10 MON</div>
+          <div class="b">Consensus runs a few blocks ahead of execution, so a slice of each balance is set aside to guarantee gas. Concurrent transfers from an under-reserved payer get <b>included, then revert</b>.</div>
+        </div>
+      </div>
+      <p class="dim" style="font-size:8pt;margin-top:3mm">Gas is charged on the <b>limit</b>, not on usage — a reverted transaction costs exactly as much as a successful one.</p>
+    </div>
+
+    <div>
+      <h2>Who pays for this</h2>
+      <p style="font-size:9pt"><b>Token teams first.</b> A ten-crore airdrop leaves seven crore unclaimed. A one percent fee to take that to zero is a 70× return — a buyer with a budget and a measurable problem.</p>
+      <p style="font-size:9pt"><b>Creators next.</b> Registries stay free; revenue comes from verified registries, platform imports, and scheduled revenue-sharing.</p>
+      <p class="dim" style="font-size:8.5pt">The honest weak point is the demand side: a creator has to <em>want</em> to pay people. Token teams already do — that is why they come first.</p>
+
+      <h2 style="margin-top:6mm">Known limits</h2>
+      <p class="dim" style="font-size:8.5pt">The rotating code buys presence and blocks bots. It does not stop one person with fifty wallets. The real answer is one device, one join — and Monad has a native <b>P256 precompile at 0x0100</b>, so a passkey from a Secure Enclave verifies on chain for 6,900 gas with no verifier library. That is the next version, and it is another reason this belongs on this chain.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div><span class="lbl">Live app</span><span class="val">dayone-peach.vercel.app</span></div>
+    <div><span class="lbl">Contract</span><span class="val">0xee9E5859674DB82c67d21710f1eFF8301eFdc1bD</span></div>
+    <div><span class="lbl">Code</span><span class="val">github.com/Phoenix1808/DayOne</span></div>
+    <div><span class="lbl">Network</span><span class="val">Monad Testnet · 10143</span></div>
+  </div>
+</section>
+
+<p class="hint">
+  <b>PDF banane ke liye:</b> <code>Ctrl + P</code> → Destination <b>Save as PDF</b> → Layout <b>Landscape</b> → Paper size <b>A4</b> → Margins <b>None</b> → Save.
+  Ye line PDF mein nahi aayegi.
+</p>
+
+</body>
+</html>
