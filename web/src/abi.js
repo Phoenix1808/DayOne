@@ -13,6 +13,7 @@ export const dayOneAbi = parseAbi([
 
   'function nextId() view returns (uint256)',
   'function supporterCount(uint256 id) view returns (uint256)',
+  'function entries(uint256 id, uint256 index) view returns (address who, uint64 at)',
   'function totalWeight(uint256 id) view returns (uint256)',
   'function weightOf(uint256 rank) view returns (uint256)',
   'function paidUpTo(uint256 id) view returns (uint256)',

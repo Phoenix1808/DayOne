@@ -6,7 +6,8 @@ import { dayOneAbi, friendlyError } from './abi'
 import { CONTRACT, connect, explorerTx, monadTestnet, publicClient, rowOf, short } from './chain'
 
 const DEPLOY_BLOCK = 57851520n
-const LOG_CHUNK = 5000n
+const LOG_CHUNK = 100n
+const MAX_CHUNKS = 30
 
 const BATCH = 50
 const ROTATE_MS = 30_000
@@ -25,7 +26,9 @@ const randomCode = () => Math.random().toString(36).slice(2, 8).toUpperCase()
 
 async function fetchJoins(registryId, fromBlock, toBlock) {
   const out = []
-  for (let start = fromBlock; start <= toBlock; start += LOG_CHUNK) {
+  let start = fromBlock
+  let chunks = 0
+  while (start <= toBlock && chunks < MAX_CHUNKS) {
     const end = start + LOG_CHUNK - 1n > toBlock ? toBlock : start + LOG_CHUNK - 1n
     const logs = await publicClient.getContractEvents({
       address: CONTRACT,
@@ -36,8 +39,10 @@ async function fetchJoins(registryId, fromBlock, toBlock) {
       toBlock: end,
     })
     out.push(...logs)
+    start = end + 1n
+    chunks++
   }
-  return out
+  return { logs: out, scannedTo: start - 1n }
 }
 
 export default function Board() {
@@ -52,7 +57,8 @@ export default function Board() {
   const [error, setError] = useState('')
   const [newName, setNewName] = useState('Monad Blitz New Delhi V4')
   const [rotating, setRotating] = useState(false)
-  const cursor = useRef(DEPLOY_BLOCK)
+  const cursor = useRef(null)
+  const handles = useRef(new Map())
 
   const rid = id ? BigInt(id) : null
   const joinUrl = rid
@@ -65,38 +71,54 @@ export default function Board() {
   const refresh = useCallback(async () => {
     if (!rid) return
     try {
-      const [reg, head] = await Promise.all([
+      const [reg, head, count, paidTo] = await Promise.all([
         publicClient.readContract({
           address: CONTRACT, abi: dayOneAbi, functionName: 'registries', args: [rid],
         }),
         publicClient.getBlockNumber(),
+        publicClient.readContract({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'supporterCount', args: [rid],
+        }),
+        publicClient.readContract({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'paidUpTo', args: [rid],
+        }),
       ])
       setRegistry({
         owner: reg[0], name: reg[1], open: reg[3], gateEnabled: reg[4],
         pot: reg[7], unit: reg[8], paidOut: reg[9],
       })
 
-      const logs = await fetchJoins(rid, cursor.current, head)
-      cursor.current = head + 1n
-      if (logs.length) {
-        setJoins((prev) => {
-          const seen = new Set(prev.map((p) => p.rank))
-          const next = [...prev]
-          for (const l of logs) {
-            const rank = Number(l.args.rank)
-            if (seen.has(rank)) continue
-            seen.add(rank)
-            next.push({
-              rank,
-              who: l.args.who,
-              at: Number(l.args.at),
-              handle: l.args.handle,
-              paid: false,
-            })
-          }
-          return next.sort((a, b) => a.rank - b.rank)
-        })
+      const n = Number(count)
+      const paid = Number(paidTo)
+
+      // the array is the source of truth; eth_getLogs here is capped at 100 blocks
+      const rows = await Promise.all(
+        Array.from({ length: n }, (_, i) =>
+          publicClient.readContract({
+            address: CONTRACT, abi: dayOneAbi, functionName: 'entries', args: [rid, BigInt(i)],
+          }),
+        ),
+      )
+
+      if (cursor.current === null) {
+        const saved = localStorage.getItem(`dayone.block.${id}`)
+        cursor.current = saved ? BigInt(saved) : head > 2000n ? head - 2000n : 0n
       }
+      const { logs, scannedTo } = await fetchJoins(rid, cursor.current, head)
+      cursor.current = scannedTo + 1n
+      for (const l of logs) {
+        if (l.args.handle) handles.current.set(Number(l.args.rank), l.args.handle)
+      }
+
+      setJoins(
+        rows.map((e, i) => ({
+          rank: i + 1,
+          who: e[0],
+          at: Number(e[1]),
+          handle: handles.current.get(i + 1) || '',
+          paid: i + 1 <= paid,
+        })),
+      )
     } catch (e) {
       //fallback to avoid blank board
       console.warn('refresh', e)
@@ -166,13 +188,15 @@ export default function Board() {
           address: CONTRACT, abi: dayOneAbi, functionName: 'openRegistry',
           args: [newName], gas: 200_000n,
         })
-        await publicClient.waitForTransactionReceipt({ hash })
+        const receipt = await publicClient.waitForTransactionReceipt({ hash })
         const next = await publicClient.readContract({
           address: CONTRACT, abi: dayOneAbi, functionName: 'nextId',
         })
         const created = String(next - 1n)
         localStorage.setItem('dayone.id', created)
-        cursor.current = DEPLOY_BLOCK
+        localStorage.setItem(`dayone.block.${created}`, String(receipt.blockNumber))
+        cursor.current = receipt.blockNumber
+        handles.current = new Map()
         setJoins([])
         setId(created)
       })
@@ -250,10 +274,18 @@ export default function Board() {
             publicClient.waitForTransactionReceipt({ hash }).catch(() => null),
           ),
         )
-        setProgress({ done: remaining, total: remaining, batches, ms: Date.now() - started })
+
+        // report what the chain actually did, not what we hoped it did
+        const after = await publicClient.readContract({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'paidUpTo', args: [rid],
+        })
+        const done = Number(after) - Number(paid)
+        setProgress({ done, total: remaining, batches, ms: Date.now() - started })
+        if (done < remaining) {
+          setError(`Only ${done} of ${remaining} were paid. Is the pot funded?`)
+        }
       })
 
-      setJoins((prev) => prev.map((j) => ({ ...j, paid: true })))
       await refresh()
     } catch (e) { setError(friendlyError(e)) }
     setBusy('')
