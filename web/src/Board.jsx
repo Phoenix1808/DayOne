@@ -8,7 +8,7 @@ import { CONTRACT, connect, explorerTx, monadTestnet, publicClient, rowOf, short
 const LOG_CHUNK = 100n
 const MAX_CHUNKS = 30
 
-const BATCH = 50
+const BATCH = 20
 const ROTATE_MS = 30_000
 
 const payoutGas = (n) => BigInt(250_000 + n * 35_000)
