@@ -46,7 +46,12 @@ async function fetchJoins(registryId, fromBlock, toBlock) {
 }
 
 export default function Board() {
-  const [id, setId] = useState(() => localStorage.getItem('dayone.id') || '')
+  const [id, setId] = useState(
+    () =>
+      new URLSearchParams(window.location.search).get('id') ||
+      localStorage.getItem('dayone.id') ||
+      '',
+  )
   const [registry, setRegistry] = useState(null)
   const [joins, setJoins] = useState([])
   const [code, setCode] = useState('')
@@ -399,6 +404,16 @@ export default function Board() {
 
             <button className="btn btn-ghost small" onClick={toggleGate} disabled={!!busy}>
               {registry?.gateEnabled ? 'Disable code gate' : 'Enable code gate'}
+            </button>
+
+            <button
+              className="btn btn-ghost small"
+              onClick={() => {
+                localStorage.removeItem('dayone.id')
+                window.location.href = window.location.pathname
+              }}
+            >
+              New registry
             </button>
           </div>
 
