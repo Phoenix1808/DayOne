@@ -23,7 +23,9 @@ const env = Object.fromEntries(
 )
 
 const CONTRACT = env.VITE_CONTRACT
-const GAS_PER_WALLET = parseEther('0.02')
+// measured join cost is ~121k; Monad debits gas_price * gas_limit up front,
+// so each wallet is funded from the limit rather than from an estimate
+const JOIN_GAS = 160_000n
 
 const chain = {
   id: 10143,
@@ -60,8 +62,20 @@ if (!reg[3]) {
   process.exit(1)
 }
 
+// Monad debits gas_limit * maxFeePerGas up front, so the fee cap has to be
+// pinned here - otherwise viem picks its own and the wallet comes up short.
+const block = await publicClient.getBlock()
+const baseFee = block.baseFeePerGas ?? (await publicClient.getGasPrice())
+const maxPriorityFeePerGas = 1_000_000_000n
+const maxFeePerGas = baseFee * 2n + maxPriorityFeePerGas
+const fees = { maxFeePerGas, maxPriorityFeePerGas }
+
+const GAS_PER_WALLET = (JOIN_GAS * maxFeePerGas * 120n) / 100n
+
 const balance = await publicClient.getBalance({ address: payer.address })
-const needed = GAS_PER_WALLET * BigInt(COUNT) + parseEther('0.5')
+const needed = (GAS_PER_WALLET + 21_000n * maxFeePerGas) * BigInt(COUNT) + parseEther('0.2')
+console.log(`baseFee    ${Number(baseFee) / 1e9} gwei  ->  cap ${Number(maxFeePerGas) / 1e9} gwei`)
+console.log(`per wallet ${formatEther(GAS_PER_WALLET)} MON`)
 console.log(`payer     ${payer.address}`)
 console.log(`balance   ${formatEther(balance)} MON`)
 console.log(`needed    ~${formatEther(needed)} MON for ${COUNT} wallets`)
@@ -84,27 +98,37 @@ const wallets = Array.from({ length: COUNT }, () => {
   return { account, client: createWalletClient({ account, chain, transport: http() }) }
 })
 
-console.log(`\nfunding ${COUNT} wallets…`)
+console.log(`
+funding ${COUNT} wallets sequentially…`)
+console.log('  Monad reserves 10 MON per EOA: concurrent value transfers from a')
+console.log('  payer under that reserve get included but revert at execution.')
 let t0 = Date.now()
 let nonce = await publicClient.getTransactionCount({ address: payer.address })
-const funding = await Promise.all(
-  wallets.map((w, i) =>
-    payerWallet
-      .sendTransaction({ to: w.account.address, value: GAS_PER_WALLET, nonce: nonce + i, gas: 21_000n })
-      .catch((e) => { console.warn(`  fund ${i} failed:`, e.shortMessage || e.message); return null }),
-  ),
-)
-await Promise.all(funding.filter(Boolean).map((hash) => publicClient.waitForTransactionReceipt({ hash }).catch(() => null)))
-console.log(`  funded in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+const funded = []
+for (let i = 0; i < COUNT; i++) {
+  try {
+    const hash = await payerWallet.sendTransaction({
+      to: wallets[i].account.address, value: GAS_PER_WALLET, nonce: nonce + i, gas: 21_000n, ...fees,
+    })
+    const rc = await publicClient.waitForTransactionReceipt({ hash })
+    if (rc.status === 'success') funded.push(wallets[i])
+    else console.warn(`  fund ${i} reverted`)
+  } catch (e) {
+    console.warn(`  fund ${i} failed:`, (e.shortMessage || e.message).split(String.fromCharCode(10))[0])
+  }
+  if ((i + 1) % 10 === 0) console.log(`  ${funded.length}/${i + 1} funded…`)
+}
+console.log(`  funded ${funded.length}/${COUNT} in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
+if (funded.length === 0) process.exit(1)
 
-console.log(`\njoining ${COUNT} wallets…`)
+console.log(`\njoining ${funded.length} wallets…`)
 t0 = Date.now()
 const joins = await Promise.all(
-  wallets.map((w, i) =>
+  funded.map((w, i) =>
     w.client
       .writeContract({
         address: CONTRACT, abi, functionName: 'join',
-        args: [REGISTRY, '', handleFor(i)], nonce: 0, gas: 200_000n,
+        args: [REGISTRY, '', handleFor(i)], nonce: 0, gas: JOIN_GAS, ...fees,
       })
       .catch((e) => { console.warn(`  join ${i} failed:`, e.shortMessage || e.message); return null }),
   ),
