@@ -115,8 +115,8 @@ contract DayOne {
     //  cohorts
 
     function weightOf(uint256 rank) public pure returns (uint256) {
-        if (rank <= 10) return 3;   // Row 1
-        if (rank <= 60) return 2;   // Row 2
+        if (rank <= 5)  return 3;   // Row 1
+        if (rank <= 15) return 2;   // Row 2
         return 1;                   // Row 3
     }
 

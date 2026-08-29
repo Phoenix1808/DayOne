@@ -73,7 +73,7 @@ export const explorerAddress = (a) => `${monadTestnet.blockExplorers.default.url
 export const short = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '')
 
 export function rowOf(rank) {
-  if (rank <= 10) return 1
-  if (rank <= 60) return 2
+  if (rank <= 5) return 1
+  if (rank <= 15) return 2
   return 3
 }

@@ -27,9 +27,9 @@ Cohorts are seat rows:
 
 | Cohort | Ranks | Weight |
 |---|---|---|
-| Row 1 | 1 – 10 | 3× |
-| Row 2 | 11 – 60 | 2× |
-| Row 3 | 61+ | 1× |
+| Row 1 | 1 – 5 | 3× |
+| Row 2 | 6 – 15 | 2× |
+| Row 3 | 16+ | 1× |
 
 Nobody claims anything. Nobody has to be online. The money simply arrives.
 

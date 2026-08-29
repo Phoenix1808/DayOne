@@ -11,7 +11,7 @@ import {
   short,
 } from './chain'
 
-const ROW_LABEL = { 1: 'Row 1 · first ten', 2: 'Row 2 · next fifty', 3: 'Row 3' }
+const ROW_LABEL = { 1: 'Row 1 · first five', 2: 'Row 2 · next ten', 3: 'Row 3' }
 
 
 const JOIN_GAS = 220_000n
@@ -199,7 +199,7 @@ export default function Join({ registryId, code }) {
 
               <p className="hint">
                 One tap writes your address, the exact second, and your position in the queue
-                to Monad. First ten count triple, next fifty double.
+                to Monad. First five count triple, next ten double.
               </p>
             </>
           )}
