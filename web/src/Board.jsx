@@ -98,22 +98,25 @@ export default function Board() {
       const paid = Number(paidTo)
 
       // the array is the source of truth; eth_getLogs here is capped at 100 blocks
-      const rows = await Promise.all(
-        Array.from({ length: n }, (_, i) =>
-          publicClient.readContract({
-            address: CONTRACT, abi: dayOneAbi, functionName: 'entries', args: [rid, BigInt(i)],
-          }),
-        ),
-      )
+      const rows = await publicClient.multicall({
+        contracts: Array.from({ length: n }, (_, i) => ({
+          address: CONTRACT, abi: dayOneAbi, functionName: 'entries', args: [rid, BigInt(i)],
+        })),
+        allowFailure: false,
+      })
 
       if (cursor.current === null) {
         const saved = localStorage.getItem(`dayone.block.${id}`)
         cursor.current = saved ? BigInt(saved) : head > 2000n ? head - 2000n : 0n
       }
-      const { logs, scannedTo } = await fetchJoins(rid, cursor.current, head)
-      cursor.current = scannedTo + 1n
-      for (const l of logs) {
-        if (l.args.handle) handles.current.set(Number(l.args.rank), l.args.handle)
+      try {
+        const { logs, scannedTo } = await fetchJoins(rid, cursor.current, head)
+        cursor.current = scannedTo + 1n
+        for (const l of logs) {
+          if (l.args.handle) handles.current.set(Number(l.args.rank), l.args.handle)
+        }
+      } catch (e) {
+        console.warn('handle scan', e)
       }
 
       setJoins(
